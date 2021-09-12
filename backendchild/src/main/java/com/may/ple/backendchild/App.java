@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.Service;
+import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -22,10 +24,17 @@ import org.glassfish.jersey.servlet.ServletContainer;
 public class App {
 	private static final Logger LOG = Logger.getLogger(App.class.getName());
 	private Properties props;
+	private static App app;
+
+	public static App getInstace() {
+		if(app == null) app = new App();
+		return app;
+	}
 
 	public static void main(String[] args) throws Exception {
 		try {
-			App app = new App();
+
+			App app = getInstace();
 
 			//---[1]
 			app.resourceInit();
@@ -54,7 +63,6 @@ public class App {
 	private void serverInit() throws Exception {
 		LOG.info("Start Server");
 		Tomcat tomcat = new Tomcat();
-        tomcat.setPort(Integer.valueOf(props.get("port").toString()));
 
         String webappPath = new File("webapp").getAbsolutePath();
         Context context = tomcat.addWebapp("/", webappPath);
@@ -78,8 +86,18 @@ public class App {
         context.addServletMappingDecoded("/jersey/*", "jersey-container-servlet");
         context.addServletMappingDecoded("/servlet/*", "servlet");
 
-        // Trigger the creation of the default connector for tomcat 9, tomcat 8 no need.
-        tomcat.getConnector();
+        if(props.get("http_port") != null) {
+        	LOG.info("Enable HTTP");
+        	tomcat.setPort(Integer.valueOf(props.get("http_port").toString()));
+        	// Trigger the creation of the default connector for tomcat 9, tomcat 8 no need.
+        	tomcat.getConnector();
+        }
+
+        if(props.get("https_port") != null) {
+        	LOG.info("Enable HTTPS");
+        	Service service = tomcat.getService();
+        	service.addConnector(getSslConnector());
+        }
 
         tomcat.start();
         tomcat.getServer().await();
@@ -90,6 +108,28 @@ public class App {
 	private ServletContainer resourceConfig() {
         return new ServletContainer(new ResourceConfig(new ResourceLoader().getClasses()));
     }
+
+	private Connector getSslConnector() {
+	    Connector connector = new Connector();
+	    connector.setPort(Integer.valueOf(props.get("https_port").toString()));
+	    connector.setSecure(true);
+	    connector.setScheme("https");
+	    connector.setProperty("keyAlias", props.get("keyAlias").toString());
+	    connector.setProperty("keystorePass", props.get("keystorePass").toString());
+	    connector.setProperty("keystoreType", "PKCS12");
+	    connector.setProperty("keystoreFile", props.get("keystoreFile").toString());
+	    connector.setProperty("clientAuth", "false");
+	    connector.setProperty("protocol", "HTTP/1.1");
+	    connector.setProperty("sslProtocol", "TLS");
+	    connector.setProperty("maxThreads", "200");
+	    connector.setProperty("protocol", "org.apache.coyote.http11.Http11NioProtocol");
+	    connector.setProperty("SSLEnabled", "true");
+	    return connector;
+	 }
+
+	public Properties getProps() {
+		return props;
+	}
 
 
 
