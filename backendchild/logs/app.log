@@ -1,3 +1,6 @@
 12/09/2021 12:27:05,103  INFO [main] (App.java:32:main) - Start App.
 12/09/2021 12:27:05,106  INFO [main] (App.java:55:serverInit) - Start Server
 12/09/2021 12:27:05,207  INFO [main] (App.java:61:serverInit) - [webappPath] = D:\Workspace\Debt_Project\backendchild\webapp
+12/09/2021 13:08:20,764  INFO [main] (App.java:32:main) - Start App.
+12/09/2021 13:08:20,768  INFO [main] (App.java:55:serverInit) - Start Server
+12/09/2021 13:08:20,867  INFO [main] (App.java:61:serverInit) - [webappPath] = D:\Repository\backend-child\backendchild\webapp
